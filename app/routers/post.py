@@ -23,7 +23,7 @@ router = APIRouter(
 #             port=5433,
 #             database='fastapi_db',
 #             user='postgres',
-#             password='31337',
+#             password='blablabla',
 #             cursor_factory=RealDictCursor
 #         )
 #         cursor = conn.cursor()
@@ -68,7 +68,7 @@ def create_posts(payload: Post, db: Session = Depends(get_db), user: TokenData =
     return new_post
 
 @router.get('/{id}', response_model=PostResponse)
-def get_single_post(id: int, db: Session = Depends(get_db)):
+def get_single_post(id: int, db: Session = Depends(get_db), user: TokenData = Depends(get_current_user)):
     # Through psycopg2
     # cursor.execute(
     #     """SELECT * FROM posts WHERE id = %s""",

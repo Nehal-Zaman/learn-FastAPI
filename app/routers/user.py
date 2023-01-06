@@ -2,10 +2,10 @@ from fastapi import status, Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
 import app.models as models
-from app.schemas import UserCreated, User, Token
+from app.schemas import UserCreated, User, Token, TokenData
 from app.database import get_db
 from app.utils import hash, verify_pwd
-from app.oauth2 import create_access_token
+from app.oauth2 import create_access_token, get_current_user
 
 router = APIRouter(
     prefix='/users',
@@ -29,13 +29,20 @@ def create_user(user: User, db: Session = Depends(get_db)):
     return userObj
 
 @router.get('/{id}', response_model=UserCreated)
-def get_single_user(id: int, db: Session = Depends(get_db)):
+def get_single_user(id: int, db: Session = Depends(get_db), user_data: TokenData = Depends(get_current_user)):
     user = db.query(models.User).filter(models.User.id == id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'User with id: {id} does not exists.'
         )
+
+    if user.id != user_data.userID:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f'user with id: {user_data.userID} is not authorized to view user with id: {user.id}'
+        )
+        
     return user
 
 @router.post('/login', response_model=Token)
